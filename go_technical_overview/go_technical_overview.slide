@@ -1,0 +1,465 @@
+A Technical Overview of Golang
+2 Feb 2015
+Tags: golang
+
+Dave Laursen
+Software Engineer, Pearson
+david.laursen@pearson.com
+@davelaursen
+
+* The Origins
+
+Was first developed at Google by Robert Griesemer, Rob Pike and Ken Thompson as an experimental research project in September 2007
+
+Was born out of a frustration with existing systems programming languages
+
+Existing languages were all dated and provided either efficient compilation, efficient execution, or ease of programming
+
+Go was created to provide a modern programming language that achieved all three goals
+
+Language was released as a public open source project in November 2009
+
+Version 1.0 was released in March 2012
+
+Current version is 1.4
+
+* Why Go?
+
+- Fast compile times
+- Compiles to native bytecode
+- Static language, but easy to use like a dynamic language
+- Type-safe
+- Memory-safe
+- Garbage collection
+- Lightweight, concise syntax
+- First-class concurrency
+- Rich standard library
+- Rich tooling
+- Designed to meet Google's needs
+- Dependably stable
+
+* What's Missing?
+
+Why are some common language features missing?
+- doesn't fit with the language
+- negatively affects compilation speed or clarity of design
+- would make fundamental system model too difficult
+- haven't gotten around to it
+
+Notable missing features:
+- No inheritance
+- No generic programming
+- No assertions
+- No method overloading
+- No classes
+- No exceptions
+- No threads
+
+* Is Go Object-Oriented?
+
+Not really...
+
+- it has types and functions and allows an object-oriented programming style
+- there are no classes, but there are user-defined types
+- there is no type hierarchy, but there are features that allow you to write code that works with all "objects"
+- interfaces are different and more general
+- no subclassing, but can embed types in other types
+
+* Packages
+
+Go has built-in support for automatically retrieving remote packages
+
+Visibility is package-level, not type-level - there is no information hiding within a package
+
+Outside of a package, only exported types and functions are visible
+
+Visibility is determined by case: if the name starts with an uppercase character, it is public and exposed outside of the package - otherwise it is private
+
+* Pointers
+
+Go has a simplified version of pointers
+
+- like C, a pointer contains a memory address to a variable
+- unlike C, pointers have types associated with them and cannot point to invalid memory addresses
+- pointers allow passing variables into a function by reference rather than by value
+- use "&" to get the memory address of a variable
+
+* Functions
+
+Features:
+
+- can return multiple values (so no need to throw exceptions)
+- can name return values:
+
+	func myFunc(x int) (val int, err string)
+
+- can be assigned to variables, passed into other functions, returned from functions
+- supports function literals (e.g. can declare a function within another function), and so it also supports closures
+- supports variadic functions, where the last parameter can represent a variable number of parameters of the same type:
+
+	func myFunc(x ...int)
+
+* Structs
+
+Structs are types that contain named fields:
+
+	type MyType struct {
+		Name string
+	}
+
+Methods can be created for a struct by defining a function that operates on that struct - this is done by specifying a method receiver:
+
+	func (mt MyType) myFunc(x int)
+
+Go does not support inheritance - however, composition can actually provides some "inheritance-like" features by embedding a type:
+
+	type MyThing struct {
+		MyType
+		Desc string
+	}
+	// MyThing takes on the methods and fields of MyType, so 'myThing.Name' will work
+
+* Interfaces
+
+Defines what something does, just like in other languages
+
+A type does not need to explicitly implement an interface - types will implement automatically by implementing the methods that the interface defines
+
+At any time, any type can implement any interface and can be passed into functions that work on that interface with no additional work needed
+
+Defining an empty interface (_interface{}_) means that any type implements it (like _Object_ in Java)
+
+* Arrays
+
+Arrays in Go are a bit different than other languages:
+
+- arrays are values - assigning one array to another copies all of its elements
+- if you pass an array to a function, it receieves a copy of the array (passed by value)
+- the size of an array is part of its type - the types _[10]int_ and _[20]int_ are distinct
+
+Can be useful when planning a detailed layout of memory, but are primarily used as a building block for slices
+
+In almost every case, you'll want to use slices over arrays
+
+* Slices
+
+Slices are data structures that wrap arrays to give a more general, powerful and convenient interface to data sequences
+
+Slices hold references to an underlying array - if you assign one slice to another, both will refer to the same array
+
+Unlike arrays, slices are effectively passed by reference - although the slice itself is passed by value, the copy passed into a function points to the same underlying array
+
+The size of a slice is not fixed, and can be changed using the _append_ keyword:
+
+	mySlice := make([]int, 10)
+	mySlice = append(mySlice, [1,2,3])  // adds three more elements to the end of the slice
+
+Note that _append_ returns a new slice that must be assigned to the original variable.  This is because a new underlying array is created, which requires the slice to be reallocated
+
+* Maps
+
+Maps are a convenient and powerful built-in dictionary data structure
+
+Like slices, maps hold references to an underlying data structure, so they are effectively passed by reference
+
+Attempting to fetch a map value with a key that does not exist in the map will return a zero value for the type of the value.  The second return value can be used to determine if the key is actually in the map or not:
+
+	m := map[string]int {
+		"Bill": 1,
+		"John": 0,
+	}
+	x1 := m["John"]     // will return 0
+	x2 := m["Joe"]      // will also return 0
+	x3, ok := m["Joe"]  // will return (0, false) since "Joe" is not in the map
+
+Use the _delete_ keyword to remove entries from a map:
+
+	delete(m, "Bill")
+
+* Syntax and Structures
+
+Variable declaration and assignment:
+
+	var x int = 0
+	y := 0  // type is inferred
+
+There are no semicolons in Go source - they are added automatically by the lexer. As a result, the opening curly brace of a control structure must be on the same line (or a semicolon will be added):
+
+	if i < 2 {
+		return true
+	}
+
+_if_ statements have no parentheses and curly braces are required. In addition, you can also provide an initialization statement:
+
+	if err := file.Chmod(0664); err != nil {
+		return err
+	}
+
+* Syntax and Structures...
+
+The only loop structure is the _for_ loop:
+
+	// like a C for
+	for i := 0; i < 10; i++ { ... }
+
+	// like a C while
+	for x < 10 { ... }
+
+	// an infinite loop
+	for { ... }
+
+	// iterating over a collection
+	for index, value := range mySlice { ... }
+	for key, value := range myMap { ... }
+
+* Syntax and Structures...
+
+There is also a switch statement. There is no automatic fall through, but multiple cases can be presented in a coma-separated list:
+
+	switch num {
+	case 0:
+		return "A"
+	case 1, 2, 3:
+		return "B"
+	default:
+		return "C"
+	}
+
+* Syntax and Structures...
+
+You can create a zero value of a struct using the _new_ keyword or by a declaration:
+
+	type Person struct {
+		Id   int
+		Name string
+	}
+	p1 := new(Person)
+	var p2 Person
+	// both p1 and p2 are ready to use
+
+You can also use constructors and composite literals to create initialized instances:
+
+	func NewPerson(id, name) Person {
+		return Person{Id: id, Name: name}
+		// field names are optional: Person{id, name} is also ok
+	}
+
+A composite literal can also be used to create a zero value for a type:
+
+	p := Person{}
+
+* Syntax and Structures...
+
+When initializing slices and maps, you can either use a composite literal or the _make_ keyword:
+
+	// initializing a slice
+	s1 := []int{1, 2, 3}        // has length and capacity of 3
+	s2 := make([]int, 10, 100)  // has length of 10 and capacity of 100
+
+	// initializing a map
+	m1 := map[int]string{  // has capacity of 3
+		1: "one",
+		2: "two",
+		3: "three",
+	}
+	m2 := make(map[int]string, 10)  // has capacity of 10
+
+_make_ allows you to specify the length and capacity up front so that it does not have to be reallocated until its capacity is reached
+
+In addition to slices and maps, _make_ is also used to create channels (and is the only way to create them)
+
+* Syntax and Structures...
+
+Formatted printing in Go uses a style similar to C's _printf_ family but is richer and more general - the functions live in the _fmt_ package
+
+examples:
+
+	fmt.Print("Hello John\n")
+	fmt.Print("Hello ", user.Name, "\n")
+	fmt.Println("Hello John")
+	fmt.Printf("Hello %s\n", user.Name)
+	fmt.Fprint(os.Stdout, "Hello John\n")
+
+	s1 := fmt.Sprintf("Hello %s\n", user.Name)
+	fmt.Printf("User %d: %#v\n", index, user)  // User 1: User{Id:21, Name:"John"}
+
+* Error Handling
+
+There is a built-in error type that is used to indicate an abnormal state
+
+Example:
+Consider the os.Open function that opens a file:
+
+	func Open(name string) (file *File, err error)
+
+The following code uses os.Open to open a file and handles an error if the file doesn't exist:
+
+	f, err := os.Open("filename.ext")
+	if err != nil {
+	    log.Fatal(err)
+	}
+
+* Exception Handling
+
+The _defer_ keyword is used to declare statements that are executed when the current function returns - can be used to perform clean-up actions or handle runtime exceptions 
+
+The following happens when a runtime error occurs:
+
+- the application makes a call to the built-in _panic_ function, which puts the application in a panic state
+- the current function stops execution, executes any deferred statements, and returns to it caller
+- the panic process will continue up the stack until all functions have executed their deferred statements and returned, at which time the program will crash
+
+The built-in _recover_ function can be called from within a deferred statement and can be used to exit a panic state and resume normal execution
+
+* Exception Handling...
+
+Example:
+
+	func main() {
+	    f()
+	}
+
+	func f() {
+	    defer func() {
+	        if r := recover(); r != nil {
+	            fmt.Println("Recovered!", r)
+	        }
+	    }()
+	    g(0)
+	}
+
+	func g(i int) {
+	    return i/(i - i) //divide by zero
+	}
+
+* Concurrency
+
+"goroutines" are basically lightweight threads that are managed by the Go runtime
+
+- multiplex independently executing functions onto a set of threads
+- when a function blocks, the run-time automatically moves other executing functions to a different thread so they won't be blocked
+- the result, called goroutines, can be very cheap as they usually cost little more than the memory for the stack (a few kilobytes)
+- it is practical to create hundreds of thousands of goroutines in the same address space
+
+* Concurrency...
+
+Sharing resources between goroutines
+
+- traditional solutions to accessing shared resources use locks, semaphores, mutexes, etc
+- only one goroutine owns the resource, and other processes must communicate with that one process using "channels" in order to use it
+- so rather than processes communicating with each other through shared resources, resources are shared by communicating
+
+* Concurrency...
+
+A channel allows communication between goroutines
+
+- unbuffered channel (the default): only one piece of data is allowed in the channel at a time
+- buffered channel: a certain amount of data can be in the channel before it is blocked
+- when passing channels to functions you can specify whether the function can write to the channel:
+
+	func MyFunc(readOnly <-chan string, readWrite chan string) { ... }
+
+* Concurrency...
+
+"select" statement: works like a switch statement but for channels
+
+	c1 := make(chan string)
+	go f1(c1)
+
+	c2 := make(chan string)
+	go f2(c2)
+
+	select {
+	    case msg1 := <- c1:
+	        fmt.Println("Message 1:", msg1)
+	    case msg2 := <- c2:
+	        fmt.Println("Message 2:", msg2)
+	    case <- time.After(time.Second * 10):
+	        fmt.Println("timeout")
+	}
+
+* When does Go make sense?
+
+Was created to replace C/C++ for systems development
+
+Makes sense for any "non-performance-critical" server-level application
+
+It is a viable alternative to Node.JS:
+- core packages make it just as easy to create containerless web applications
+- doesn't have any of the JavaScript quirks or pitfalls
+- true concurrency without callbacks
+- able to easily use all CPU cores
+- good profiling tools for optimizing memory, CPU and performance
+- good support for large code bases
+- easier for developers used to strongly-type languages
+
+Also a popular alternative to Ruby and Python
+
+* Who's using Go?
+
+Some popular applications and projects written in Go:
+
+- Docker
+- HashiCorp's Packer, Serf and Consul
+- Canonical's Juju
+- Mozilla's Heka
+- YouTube's tooling for MySql scaling
+- Cloud Foundry's gorouter and CLI
+- Heroku
+- InfluxDB
+- Iron.io
+
+* Getting Started
+
+Install Go:
+
+.link http://golang.org/doc/install http://golang.org/doc/install
+
+Learn to write Go code:
+
+.link http://tour.golang.org http://tour.golang.org
+.link http://golang.org/doc/code.html http://golang.org/doc/code.html
+
+Learn language features and how to write clear, idiomatic code:
+
+.link http://golang.org/doc/effective_go.html http://golang.org/doc/effective_go.html
+.link http://www.golang-book.com/ http://www.golang-book.com/
+
+Start Hacking!
+
+.link http://play.golang.org http://play.golang.org
+
+* Install Go Tools
+
+Install some must-have Go tools
+
+- first you need to change permissions on your Go home directory:
+
+	cd /usr/local
+	sudo chmod -R 777 go/
+
+- now you can install the go tools:
+
+	go get golang.org/x/tools/cmd/cover
+	go get golang.org/x/tools/cmd/goimports
+	go get golang.org/x/tools/cmd/gotype
+	go get golang.org/x/tools/cmd/vet
+	go get github.com/golang/lint/golint
+	go get code.google.com/p/go.tools/cmd/present
+
+* Set Up an IDE (optional)
+
+Install Sublime Text 3 (ST3):
+
+.link http://www.sublimetext.com/3 http://www.sublimetext.com/3
+
+Install Package Control for ST3:
+
+.link https://packagecontrol.io/installation https://packagecontrol.io/installation
+
+Install Go Plugins:
+- press cmd+shift+p (OS X) or ctrl+shift+p (Win, Linux)
+- type "install" and select "Package Control: Install Package"
+- type "GoSublime" and install the package
+- repeat for "GoImports", "SublimeLinter", "SublimeLinter-contrib-golint", "SublimeLinter-contrib-gotype", "SublimeLinter-contrib-govet"
+
