@@ -2,9 +2,7 @@
 
 This repo contains a collection of tech talks and presentations that I have done.
 
-Go Present slide articles and slide decks are viewable online using the links below.  To view them with full functionality and styles intact, download them and run them locally using the Go Present tool, which can be installed with the following command (assuming that [Go has been installed](http://golang.org/doc/install.html)):
-
-	go get code.google.com/p/go.tools/cmd/present
+Go Present articles and slide decks are viewable online using the links below.  To view them with full functionality and custom styles intact, download them and run them locally following the instructions in the README for each presentation.
 
 ### View Presentations Online
 
