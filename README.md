@@ -6,4 +6,6 @@ Go Present articles and slide decks are viewable online using the links below.  
 
 ### View Presentations Online
 
-[A Technical Overview of Golang](http://go-talks.appspot.com/github.com/davelaursen/presentations/go_technical_overview/go_technical_overview.slide)
+[A Technical Overview of Golang](http://go-talks.appspot.com/github.com/davelaursen/presentations/go_technical_overview/go_technical_overview.slide), Jan 2015
+
+[Creating REST Services in Go](http://go-talks.appspot.com/github.com/davelaursen/presentations/go_rest_services/go_rest_services.slide), Feb 2015

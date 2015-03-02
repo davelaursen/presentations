@@ -1,0 +1,126 @@
+Creating REST Services in Go
+26 Feb 2015
+Tags: golang
+
+Dave Laursen
+Software Engineer, Pearson
+david.laursen@pearson.com
+@davelaursen
+
+* Containerless Web Server
+
+The _net/http_ package provides the ability to quickly and easily create a containerless web server.
+
+	func main() {
+	    http.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+	        w.WriteHeader(200)
+	        w.Write([]byte(`{"status":"ok"}`))
+	    })
+	    err := http.ListenAndServe(":8080", nil)
+	    if err != nil {
+	        log.Fatal("ListenAndServe: ", err)
+	    }
+	}
+
+_net/http_ also provides a subpackage _httptest_, which provides the ability to easily test your handlers (more on that next time...)
+
+* Router
+
+The _http.HandleFunc_ function provides the ability to handle routes.
+
+	http.HandleRunc("/status", func(w http.ResponseWriter, r *http.Request) {
+	    switch r.Method {
+	    case "GET":
+	        w.WriteHeader(200)
+	        w.Write([]byte(`{"status":"ok"}`))
+	    default:
+	        w.WriteHeader(404)
+	    }
+	})
+
+There are also third-party routing packages that provide a more declarative syntax. Gorilla/Mux is probably the most popular.
+
+	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+	    w.WriteHeader(200)
+	    w.Write([]byte(`{"status":"ok"}`))
+	}).Methods("GET")
+
+* Middleware
+
+There are numerous packages that provide the ability to integrate middleware into your Web server. Examples of middleware include logging, panic recovery, CORS support, and authentication.
+
+One of the most popular is called Negroni.
+
+	n := negroni.New()
+	n.Use(negroni.NewRecovery())    // handles panics so they don't crash your server
+	n.Use(negroni.NewLogger())      // logs all http requests and basic metrics
+	n.UseHandler(router)            // pass in whatever router you want to use (i.e. gorrilla/mux)
+
+There are a bunch of third-party middleware packages available on GitHub, or you can very easily roll your own.
+
+	contentTypeMiddleware := negroni.HandlerFunc(
+	    func(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	        w.Header().Set("Content-Type", "application/json")
+	        next(w, r)
+	    })
+	n.Use(contentTypeMiddleware())
+
+* JSON
+
+Go provides built-in support for JSON serialization through struct tags and the _encoding/json_ package.
+
+Struct tags allow us to define in our struct how each field should be serialized:
+
+	type Thing struct {
+	    ID   int                          // JSON field is "ID"
+	    Type string `json:"-"`            // not included in JSON
+	    name string `json:"name"`         // not included because field is not exported
+	    Desc string `json:"description"`  // JSON field is "description"
+	}
+	// {"ID":0,"description":""}
+
+You use the _Marshal_ and _Unmarshal_ functions to serialize/deserialize structs:
+
+	// serialize
+	thing := &Thing{ID: 1, Desc: "test"}
+	j, err := json.Marshal(thing)
+
+	// deserialize
+	var thing2 *Thing
+	err = json.Unmarshal(j, &thing2)
+
+* Time to Code
+
+Core Library Packages
+
+.link http://golang.org/pkg/net/http http://golang.org/pkg/net/http
+.link http://golang.org/pkg/encoding/json http://golang.org/pkg/encoding/json
+
+Third-Party Packages
+
+.link http://www.gorillatoolkit.org/pkg/mux http://www.gorillatoolkit.org/pkg/mux
+.link https://github.com/codegangsta/negroni https://github.com/codegangsta/negroni
+
+JSON playground example
+
+.link http://play.golang.org/p/-M3TnCIqq5 http://play.golang.org/p/-M3TnCIqq5
+
+Example REST Service
+
+.link https://devops-tools.pearson.com/stash/projects/PLUG/repos/golang/browse/example_code/rest_service https://devops-tools.pearson.com/stash/projects/PLUG/repos/golang/browse/ example_code/rest_service
+
+* Tips of the Week
+
+*Explore*the*Core*Library's*Source*Code*
+
+- go to http://golang.org/pkg
+- select a package to explore
+- in the package documentation, click on a func or struct name to view its source code
+
+*Use*Go's*Present*Tool*for*your*Slide*Decks*
+
+- write your content in markdown
+- format them as either slide decks or articles
+- upload them to GitHub and anyone can view them using go-talks
+- override the CSS styles and JavaScript to customize your presentation
+- check out Scott Engle's "Presentations with Present" to learn more: go-talks.appspot.com/github.com/scottengle/presentations/presentations_with_present/presentations.slide
